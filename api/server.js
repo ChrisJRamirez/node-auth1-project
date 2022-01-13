@@ -24,20 +24,21 @@ const authRouter = require("./auth/auth-router");
 const server = express();
 
 const config = {
-  name:"sessionId",
+  name:"chocolatechip",
   secret: "keep it secret, keep it safe",
   cookie:{
     maxAge: 1000 * 60 * 60,
     secure:false,
-    httpOnly: true
+    httpOnly: true,
+
   },
   resave:false,
   saveUnitialized:false,
   store: new KnexSessionStore({
     knex:require("../data/db-config"),
+    createTable:true,
     tablename:"sessions",
     sidfieldname:"sid",
-    createTable:true,
     clearInterval:1000 * 60 * 60
   })
 }

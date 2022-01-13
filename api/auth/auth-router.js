@@ -1,7 +1,12 @@
 // Require `checkUsernameFree`, `checkUsernameExists` and `checkPasswordLength`
 // middleware functions from `auth-middleware.js`. You will need them here!
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcryptjs");
+const User = require("../users/users-model");
+
+const {checkUsernameFree, checkUsernameExists, checkPasswordLength} = require("./auth-middleware");
+
 
 /**
   1 [POST] /api/auth/register { "username": "sue", "password": "1234" }
@@ -26,6 +31,19 @@ const router = express.Router()
   }
  */
 
+  
+  router.post("/register",checkUsernameFree, checkPasswordLength, async (req, res) => {
+    console.log(req.body.username)
+    try{
+      const hash = bcrypt.hashSync(req.body.password,10) //2 to the 10th power
+      const newUser = await User.add({username:req.body.username, password:hash})
+      res.status(200).json(newUser)
+
+    } catch(e){
+      res.status(500).json(`Server errors: ${e}`)
+    }
+  });
+
 
 /**
   2 [POST] /api/auth/login { "username": "sue", "password": "1234" }
@@ -43,6 +61,25 @@ const router = express.Router()
   }
  */
 
+ 
+
+  router.post("/login", checkUsernameExists, (req, res) => {
+
+    try{
+      const verified = bcrypt.compareSync(req.body.password, req.userData.password)
+      
+      if(verified){
+        req.session.user = req.userData
+        res.json({message:`Welcome ${req.userData.username}`})
+      }else{
+        res.status(401).json({message:"Invalid credentials"})
+      }
+
+    }catch(e){
+      res.status(500).json(`Server error: ${e}`)
+    }
+  })
+
 
 /**
   3 [GET] /api/auth/logout
@@ -59,6 +96,20 @@ const router = express.Router()
     "message": "no session"
   }
  */
+
+  router.get("/logout", (req, res) => {
+    if(req.session){
+      req.session.destroy(err => {
+        if(err){
+          res.status(500).json("can't log out")
+        }else{
+          res.status(200).json({message:"logged out"})
+        }
+      })
+    }else{
+      res.status(200).json({message:"no session"})
+    }
+  })
 
  
 // Don't forget to add the router to the `exports` object so it can be required in other modules
