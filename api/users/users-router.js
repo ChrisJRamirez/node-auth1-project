@@ -28,15 +28,27 @@ const {restricted} = require("../auth/auth-middleware")
   }
  */
 
-router.get("/", restricted, (req, res, next) => {
-  Users.find()
-  .then(users => {
-    res.status(200).json(users)
-  })
-  .catch(() =>
-     res.status(401).json({message:"You shall not pass!"})
-    )
+// router.get("/", restricted, (req, res, next) => {
+//   Users.find()
+//   .then(users => {
+//     res.status(200).json(users)
+//   })
+//   .catch(() =>
+//      res.status(401).json({message:"You shall not pass!"})
+//     )
   
+// })
+
+
+//both code options above and below work*****
+
+router.get("/", restricted, async (req, res, next) => {
+  try{
+    const users = await Users.find()
+    res.json(users)
+  }catch(error){
+    next(error)
+  }
 })
 
 

@@ -32,12 +32,12 @@ const {checkUsernameFree, checkUsernameExists, checkPasswordLength} = require(".
  */
 
   
-  router.post("/register",checkUsernameFree, checkPasswordLength, async (req, res) => {
-    console.log(req.body.username)
+  router.post("/register",checkPasswordLength, checkUsernameFree, async (req, res) => {
+    const {username, password} = req.body
     try{
-      const hash = bcrypt.hashSync(req.body.password,10) //2 to the 10th power
-      const newUser = await User.add({username:req.body.username, password:hash})
-      res.status(200).json(newUser)
+      const hash = bcrypt.hashSync(password,10) //2 to the 10th power
+      const newUser = await User.add({username:username, password:hash})
+      res.status(201).json(newUser)
 
     } catch(e){
       res.status(500).json(`Server errors: ${e}`)
@@ -64,12 +64,15 @@ const {checkUsernameFree, checkUsernameExists, checkPasswordLength} = require(".
  
 
   router.post("/login", checkUsernameExists, (req, res) => {
+    const {password} = req.body
 
     try{
-      const verified = bcrypt.compareSync(req.body.password, req.userData.password)
+      const verified = bcrypt.compareSync(password, req.userData.password)
       
       if(verified){
         req.session.user = req.userData
+        // make it so the cookie is set on the client
+        // make it so server stores a session with a session id
         res.json({message:`Welcome ${req.userData.username}`})
       }else{
         res.status(401).json({message:"Invalid credentials"})
@@ -98,7 +101,7 @@ const {checkUsernameFree, checkUsernameExists, checkPasswordLength} = require(".
  */
 
   router.get("/logout", (req, res) => {
-    if(req.session){
+    if(req.session.user){
       req.session.destroy(err => {
         if(err){
           res.status(500).json("can't log out")
@@ -109,7 +112,24 @@ const {checkUsernameFree, checkUsernameExists, checkPasswordLength} = require(".
     }else{
       res.status(200).json({message:"no session"})
     }
-  })
+  });
+
+  // code above and below is similar, both pass tests
+  // Gabe's way below
+  
+  // router.get("/logout", (req, res, next) => {
+  //   if (req.session.user) {
+  //     req.session.destroy(err => {
+  //       if(err) {
+  //         next(err)
+  //       } else {
+  //         res.json({message: "logged out"})
+  //       }
+  //     })
+  //   } else {
+  //     res.json({message: "no session"})
+  //   }
+  // })
 
  
 // Don't forget to add the router to the `exports` object so it can be required in other modules

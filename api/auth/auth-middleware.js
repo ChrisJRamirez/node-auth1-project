@@ -11,7 +11,8 @@ const bcrypt = require("bcryptjs");
   }
 */
 function restricted (req, res, next){
-  if(req.session && req.session.user){
+  if(req.session.user){
+    // if(req.session && req.session.user){
     next()
   }else{
     res.status(401).json({message:"You shall not pass!"})
@@ -26,19 +27,33 @@ function restricted (req, res, next){
     "message": "Username taken"
   }
 */
+// async function checkUsernameFree(req, res, next) {
+//   try{
+//     const rows = await User.findBy({username:req.body.username})
+//     if(!rows.length){
+//       next()
+//     }else{
+//       res.status(422).json({message:"Username taken"})
+//     }
+
+//   }catch(e){
+//     res.status(500).json(`Server error: ${e}`)
+//   }
+// }
+
+// code above and below are similar and pass same tests
+// Gabe's way below
 async function checkUsernameFree(req, res, next) {
   try{
-    const rows = await User.findBy({username:req.body.username})
-    if(!rows.length){
-      next()
-    }else{
-      res.status(422).json({message:"Username taken"})
+    const users = await User.findBy({username:req.body.username})
+    if(!users.length){
+    next()
     }
-
-  }catch(e){
-    res.status(500).json(`Server error: ${e}`)
+    else next(
+      {message:"Username taken", status: 422})
+  }catch(err){
+    next(err)
   }
-
 }
 
 /*
@@ -63,6 +78,25 @@ async function checkUsernameExists(req, res, next) {
       res.status(500).json(`Server error: ${e}`)
   }
 }
+
+// code above and below are similar, not passing same tests
+// Gabe's way below
+
+// async function checkUsernameExists(req, res, next) {
+//   try{
+//     const users = await User.findBy({username:req.body.username})
+//     if(!users.length){
+//       req.user = users[0]
+//     next()
+//     }
+//     else next(
+//       {message:"Invalid credentials", status: 401})
+//   }catch(err){
+//     next(err)
+//   }
+// }
+
+
 
 /*
   If password is missing from req.body, or if it's 3 chars or shorter
