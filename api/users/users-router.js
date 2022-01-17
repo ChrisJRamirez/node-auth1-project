@@ -28,7 +28,6 @@ const {restricted} = require("../auth/auth-middleware")
   }
  */
 
-  // ******* may need to edit to add in next()
 router.get("/", restricted, (req, res, next) => {
   Users.find()
   .then(users => {
